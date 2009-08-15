@@ -1,0 +1,71 @@
+#summary How to set up srp-js on a django server.
+
+= Introduction =
+
+srp-js can be set up to authenticate users in a django web application. It can be used in web applications with an existing userbase as well as new web applications. In existing web application, user accounts will be updated the first time they log in after srp-js is installed.
+
+----
+= Setup =
+These instructions assume you have an existing django application. They also assume that the srp application is in your python path at 'srp', if it is elsewhere, you will need to adjust these instructions accordingly.
+
+== settings.py ==
+
+=== Authentication Backends ===
+Add the following lines to the bottom of your settings.py file:
+
+{{{
+AUTHENTICATION_BACKENDS = (
+    'srp.backends.SRPBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+}}}
+
+=== Installed Applications ===
+In the 'INSTALLED_APPS' tuple, before your own application, add
+{{{
+'srp',
+}}}
+
+== urls.py ==
+There are several options in urls.py. In any case, you will need to import srp.views, so at the top of the file, add
+
+{{{
+import srp.views
+}}}
+
+=== Registration ===
+If you want to allow users to register themselves, you will need to add the following lines:
+
+{{{
+    (r'^srp/register/salt/$', srp.views.register_salt),
+    (r'^srp/register/user/$', srp.views.register_user),
+}}}
+
+Later on I will create instructions for allowing registration administrators to control registration, rather than allowing anyone to register themselves.
+
+=== Login ===
+Add the following lines to allow users to log in:
+{{{
+    (r'^srp/handshake/$', srp.views.handshake),
+    (r'^srp/authenticate/$', srp.views.verify),
+}}}
+
+=== No Javascript ===
+If you have a significant userbase that does not have javascript enabled, you may wish to allow traditional logins. In this case, the user will send his username and password in clear text to be authenticated, and you lose the protection of srp. It is up to the web developer to decide whether or not to allow this in favor of letting users log in without javascript enabled.
+
+If you want to enable logins without javascript, add this line:
+
+{{{
+    (r'^srp/noJs/$', srp.views.no_javascript),
+}}}
+
+=== Upgrades ===
+If you are upgrading a django application with an existing userbase that you don't want to lose, you will need to add the following lines so that existing accounts can be upgraded to support SRP.
+
+{{{
+    (r'^srp/upgrade/authenticate/$', srp.views.upgrade_auth),
+    (r'^srp/upgrade/verifier/$', srp.views.upgrade_add_verifier),
+}}}
+
+== Todo ==
+HTML and Javascript code necessary to enable logins at a site level.
